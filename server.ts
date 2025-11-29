@@ -1,20 +1,24 @@
-// Deno Deploy compatible WebSocket TTS server
-// NO Express, NO "ws", no installs needed
+// FINAL WORKING DENO DEPLOY WEBSOCKET SERVER
 
-Deno.serve((req) => {
-  // Root URL (GET /)
+const clients = new Set<WebSocket>();
+
+Deno.serve((req: Request) => {
   const upgrade = req.headers.get("upgrade") || "";
+
+  // Normal HTTP request
   if (upgrade.toLowerCase() !== "websocket") {
-    return new Response("WebSocket TTS server running", {
+    return new Response("WebSocket TTS server running!", {
       headers: { "content-type": "text/plain" }
     });
   }
 
-  // Upgrade to WebSocket
+  // WebSocket connection
   const { socket, response } = Deno.upgradeWebSocket(req);
 
   socket.onopen = () => {
+    clients.add(socket);
     console.log("Client connected");
+
     socket.send(JSON.stringify({
       username: "Tester",
       amount: 50,
@@ -27,42 +31,11 @@ Deno.serve((req) => {
     console.log("Received:", event.data);
   };
 
+  socket.onclose = () => {
+    clients.delete(socket);
+  };
+
   return response;
-});
-
-// Broadcast storage
-const clients = new Set<WebSocket>();
-
-// Global listener for connections
-Deno.serve({
-  onListen() {
-    console.log("Server running on Deno Deploy");
-  },
-  handler(req) {
-    const upgrade = req.headers.get("upgrade") || "";
-    if (upgrade.toLowerCase() !== "websocket") {
-      return new Response("WebSocket TTS server running");
-    }
-
-    const { socket, response } = Deno.upgradeWebSocket(req);
-
-    socket.onopen = () => {
-      clients.add(socket);
-      console.log("Client connected");
-      socket.send(JSON.stringify({
-        username: "Tester",
-        amount: 50,
-        message: "Hello from Deno Deploy!",
-        gif: "https://i.imgur.com/2uZJt3P.gif"
-      }));
-    };
-
-    socket.onclose = () => {
-      clients.delete(socket);
-    };
-
-    return response;
-  },
 });
 
 // Broadcast function
@@ -74,12 +47,5 @@ function broadcast(data: any) {
   }
 }
 
-// Auto broadcast every 30 seconds (same as your original)
-setInterval(() => {
-  broadcast({
-    username: "AutoTest",
-    amount: Math.floor(Math.random() * 100),
-    message: "This is a test message!",
-    gif: "https://i.imgur.com/2uZJt3P.gif"
-  });
-}, 30000);
+// Auto broadcast every 30 seconds
+setInter
