@@ -1,11 +1,11 @@
-// FINAL WORKING DENO DEPLOY WEBSOCKET SERVER
+// FINAL WORKING DENO DEPLOY WEBSOCKET SERVER (FIXED)
 
 const clients = new Set<WebSocket>();
 
 Deno.serve((req: Request) => {
   const upgrade = req.headers.get("upgrade") || "";
 
-  // Normal HTTP request
+  // HTTP request
   if (upgrade.toLowerCase() !== "websocket") {
     return new Response("WebSocket TTS server running!", {
       headers: { "content-type": "text/plain" }
@@ -38,7 +38,7 @@ Deno.serve((req: Request) => {
   return response;
 });
 
-// Broadcast function
+// Broadcast to all clients
 function broadcast(data: any) {
   for (const client of clients) {
     try {
@@ -48,4 +48,13 @@ function broadcast(data: any) {
 }
 
 // Auto broadcast every 30 seconds
-setInter
+setInterval(() => {
+  broadcast({
+    username: "AutoTest",
+    amount: Math.floor(Math.random() * 100),
+    message: "This is a test message!",
+    gif: "https://i.imgur.com/2uZJt3P.gif"
+  });
+}, 30000);
+
+console.log("Server running on Deno Deploy");
